@@ -1,0 +1,28 @@
+version: "3"
+services:
+  rmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rmq
+    restart: always
+    networks:
+      - template
+    environment:
+      RABBITMQ_DEFAULT_USER: "${QUEUE_USERNAME}"
+      RABBITMQ_DEFAULT_PASS: "${QUEUE_PASSWORD}"
+
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+    volumes:
+      # named volumes
+      - rabbitdata:/data/db
+      - rabbitlog:/data/configdb
+
+volumes:
+  rabbitdata:
+  rabbitlog:
+
+networks:
+  template:
+    external: true

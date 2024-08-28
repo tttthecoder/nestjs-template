@@ -1,0 +1,30 @@
+version: '3.5'
+
+services:
+  database:
+    image: mysql:8.0
+    container_name: mysql-template
+    restart: always
+    networks:
+      - template
+    environment:
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./template:/data/mysql
+    env_file:
+      - .env
+
+volumes:
+  database:
+    driver: local
+
+networks:
+  template:
+    external: true
+
