@@ -15,13 +15,13 @@ export class UserTokenRepository implements IUserTokenRepository {
   ) {}
 
   async create(dto: Pick<UserToken, 'token' | 'type' | 'userAccountId'>): Promise<UserToken | null> {
-    const entity = await this.userTokenEntityRepository.save(dto);
+    const entity = await this.userTokenEntityRepository.save(new UserTokenEntity({ ...dto }));
 
     return entity?.toModel();
   }
 
   async creates(dtos: Pick<UserToken, 'token' | 'type' | 'userAccountId'>[]): Promise<UserToken[]> {
-    const entity = await this.userTokenEntityRepository.save(dtos);
+    const entity = await this.userTokenEntityRepository.save(dtos.map((e) => new UserTokenEntity({ ...e })));
 
     return entity.map((e) => e?.toModel());
   }

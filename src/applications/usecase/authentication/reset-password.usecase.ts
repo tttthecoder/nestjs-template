@@ -19,7 +19,11 @@ export class ResetPasswordUseCases implements UseCase<ResetPasswordRequestDto, S
 
     const user = await this.unitOfWork.getUserAccountRepository().findOneByUUID(uuid);
 
-    if (this.isBlockedOrInactive(user)) {
+    if (
+      this.isBlockedOrInactive(user) ||
+      !user?.userLoginData?.passwordRecoveryToken ||
+      user?.userLoginData?.passwordRecoveryToken !== token
+    ) {
       return { result: false };
     }
 

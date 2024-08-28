@@ -5,17 +5,26 @@ import { UserAccountStatus } from '@domains/common/user-account';
 import { UserAccount } from '@domains/entities';
 import { IUnitOfWork } from '@domains/unit-of-work/unit-of-work.service';
 import { UseCase } from '@domains/usecase/usecase.interface';
-import { ErrorType } from '@shared/common/enums';
+import { ErrorType, IsolationLevel } from '@shared/common/enums';
+import { Transactional } from '@shared/decorators';
 import { DisabledUserException, InvalidCredentialsException } from '@shared/exceptions';
 import { HashHelper } from '@shared/helpers/hash.helper';
 
-export class LoginUseCases implements UseCase<AuthCredentialsRequestDto, { user: UserAccount; token: TokenDto }> {
+export class LoginUseCases
+  implements UseCase<AuthCredentialsRequestDto, { user: UserAccount; token: TokenDto; refreshTokenCookie: string }>
+{
   constructor(
     private readonly unitOfWork: IUnitOfWork,
     private readonly jwtTokenService: IJwtService,
   ) {}
 
-  async execute(input: AuthCredentialsRequestDto): Promise<{ user: UserAccount; token: TokenDto }> {
+  @Transactional({
+    replication: true,
+    isolationLevel: IsolationLevel.READ_COMMITTED,
+  })
+  async execute(
+    input: AuthCredentialsRequestDto,
+  ): Promise<{ user: UserAccount; token: TokenDto; refreshTokenCookie: string }> {
     const { email, password } = input;
     const userAccount: UserAccount = await this.unitOfWork.getUserAccountRepository().findOneByEmail(email);
 
@@ -39,6 +48,6 @@ export class LoginUseCases implements UseCase<AuthCredentialsRequestDto, { user:
       throw new DisabledUserException(ErrorType.InactiveUser);
     }
 
-    return await this.jwtTokenService.responseAuthWithToken(userAccount);
+    return await this.jwtTokenService.responseAuthWithAccessTokenAndRefreshTokenCookie(userAccount);
   }
 }

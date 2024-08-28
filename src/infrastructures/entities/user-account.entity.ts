@@ -7,7 +7,7 @@ import { UserAccount } from '@domains/entities';
 import { BlacklistTokenEntity } from './blacklist-token.entity';
 import { UserTokenEntity } from './user-token.entity';
 
-@Entity({ name: 'user_account', schema: 'asean-hr-training' })
+@Entity({ name: 'user_account' })
 export class UserAccountEntity extends UserAccount {
   @PrimaryGeneratedColumn({ name: 'id', type: 'bigint' })
   id: number;
@@ -106,8 +106,9 @@ export class UserAccountEntity extends UserAccount {
     model.lastName = this.lastName;
     model.phoneNumber = this.phoneNumber;
     model.status = this.status;
-    // model.userLoginData = entity.userLoginData;
-    // model.userLoginExternals = entity.userLoginExternals;
+    model.userLoginData = this?.userLoginData?.toModel();
+    // model.userLoginExternals = this?.userLoginExternals?.map((e) => e?.toModel());
+    model.tokens = this?.tokens?.map((e) => e?.toModel());
     model.uuid = this.uuid;
     return model;
   }

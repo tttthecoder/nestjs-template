@@ -27,7 +27,7 @@ export class BlacklistTokenRepository implements IBlacklistTokenRepository {
     });
 
     if (!entity) return null;
-    return entity.toModel();
+    return entity?.toModel();
   }
 
   async deleteExpiredToken(userAccountId: number): Promise<void> {
@@ -43,9 +43,8 @@ export class BlacklistTokenRepository implements IBlacklistTokenRepository {
   async createBlacklistTokens(
     dtos: Pick<BlacklistToken, 'userAccountId' | 'token' | 'expiredAt'>[],
   ): Promise<BlacklistToken[]> {
-    const entities = await this.blacklistTokenRepository.save(dtos);
-
-    return entities.map((e) => e.toModel());
+    const entities = await this.blacklistTokenRepository.save(dtos.map((e) => new BlacklistTokenEntity({ ...e })));
+    return entities.map((e) => e?.toModel());
   }
 
   async createBlacklistToken(
@@ -53,7 +52,7 @@ export class BlacklistTokenRepository implements IBlacklistTokenRepository {
   ): Promise<BlacklistToken> {
     const entity = await this.blacklistTokenRepository.save(dto);
 
-    return entity.toModel();
+    return entity?.toModel();
   }
 
   getEntityManager(): EntityManager {

@@ -10,3 +10,4 @@ export * from './transactional.decorator';
 export * from './decorator.constant';
 export * from './match.decorator';
 export * from './property.decorator';
+export * from './jwt-refresh-guard';

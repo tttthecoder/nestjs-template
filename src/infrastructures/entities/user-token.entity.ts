@@ -4,8 +4,14 @@ import { UserTokenType } from '@domains/common/token';
 import { BaseEntity } from './base.entity';
 import { UserToken } from '@domains/entities';
 
-@Entity({ schema: 'asean-hr-training', name: 'user_tokens' })
-export class UserTokenEntity {
+@Entity({ name: 'user_tokens' })
+export class UserTokenEntity extends UserToken {
+  // Constructor
+  constructor(userToken?: Partial<UserTokenEntity>) {
+    super();
+    Object.assign(this, userToken);
+  }
+
   @PrimaryGeneratedColumn({ name: 'id', type: 'integer' })
   id: number;
 

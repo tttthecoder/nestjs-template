@@ -1,9 +1,13 @@
 import { IBlacklistTokenRepository } from '@domains/repositories/blacklist-token-repository.interface';
+import { INotificationRepository } from '@domains/repositories/notification-repository.interface';
+import { IOtpRepository } from '@domains/repositories/otp-repository.interface';
 import { IUserAccountRepository } from '@domains/repositories/user-account-repository.interface';
 import { IUserLoginDataRepository } from '@domains/repositories/user-login-data-repository.interface';
 import { IUserTokenRepository } from '@domains/repositories/user-token-repository.interface';
 import { IUnitOfWork } from '@domains/unit-of-work/unit-of-work.service';
 import { BlacklistTokenRepository } from '@infrastructures/repositories/blacklist-token.repository';
+import { NotificationRepository } from '@infrastructures/repositories/notification.repository';
+import { OtpRepository } from '@infrastructures/repositories/otp.repository';
 import { UserAccountRepository } from '@infrastructures/repositories/user-account.repository';
 import { UserLoginDataRepository } from '@infrastructures/repositories/user-login-data.repository';
 import { UserTokenRepository } from '@infrastructures/repositories/user-token.repository';
@@ -24,7 +28,17 @@ export class UnitOfWork implements IUnitOfWork {
     private readonly blacklistTokenRepository: IBlacklistTokenRepository,
     @Inject(UserTokenRepository)
     private readonly userTokenRepository: IUserTokenRepository,
+    @Inject(OtpRepository)
+    private readonly otpRepository: IOtpRepository,
+    @Inject(NotificationRepository)
+    private readonly notificationRepository: INotificationRepository,
   ) {}
+  getOtpRepository(): IOtpRepository {
+    return this.otpRepository;
+  }
+  getNotificationRepository(): INotificationRepository {
+    return this.notificationRepository;
+  }
   getUserTokenRepository(): IUserTokenRepository {
     return this.userTokenRepository;
   }

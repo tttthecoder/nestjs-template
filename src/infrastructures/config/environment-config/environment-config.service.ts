@@ -49,6 +49,12 @@ export class EnvironmentConfigService implements DatabaseConfig, JWTConfig, Mail
   getJwtPasswordSecret(): string {
     return this.configService.get<string>('RESET_PASSWORD_SECRET');
   }
+  getJwtRefreshCookieKey(): string {
+    return this.configService.get<string>('REFRESH_TOKEN_COOKIE_KEY');
+  }
+  getJwtRefreshTokenCookieMaxAge(): string {
+    return this.configService.get<string>('REFRESH_TOKEN_COOKIE_MAX_AGE');
+  }
 
   // Config ENV database
   getDatabaseHost(): string {

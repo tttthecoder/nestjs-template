@@ -1,6 +1,7 @@
 import { Gender, UserAccountStatus } from 'src/domains/common/user-account';
 import { UserLoginDataExternal } from './user-login-data-external.model';
 import { UserLoginData } from './user-login-data.model';
+import { UserToken } from './user-token.model';
 
 export class UserAccount {
   constructor(data?: Partial<UserAccount>) {
@@ -21,4 +22,5 @@ export class UserAccount {
   deletedAt: Date;
   userLoginExternals: UserLoginDataExternal[];
   userLoginData: UserLoginData;
+  tokens: UserToken[];
 }

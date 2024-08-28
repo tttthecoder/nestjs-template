@@ -13,7 +13,7 @@ export interface ITokenDto {
 
   accessTokenExpires: string;
 
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 export interface IJwtService {
@@ -26,4 +26,11 @@ export interface IJwtService {
     userAccount: UserAccount,
     hasVerify2FA?: boolean,
   ): Promise<{ user: UserAccount; token: ITokenDto }>;
+
+  responseAuthWithAccessTokenAndRefreshTokenCookie(
+    userAccount: UserAccount,
+    hasVerify2FA?: boolean,
+  ): Promise<{ user: UserAccount; token: ITokenDto; refreshTokenCookie: string }>;
+
+  getLoggedOutCookieForJwtRefreshToken(): string;
 }

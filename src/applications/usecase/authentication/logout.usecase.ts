@@ -1,37 +1,43 @@
+import { IJwtService } from '@domains/adapters/jwt.interface';
 import { BlacklistToken, UserAccount, UserToken } from '@domains/entities';
 import { IUnitOfWork } from '@domains/unit-of-work/unit-of-work.service';
 import { UseCase } from '@domains/usecase/usecase.interface';
 import { IsolationLevel } from '@shared/common/enums';
 import { Transactional } from '@shared/decorators';
-import { SuccessResponseDto } from '@shared/dtos';
-import { EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 
-export class LogoutUseCases implements UseCase<UserAccount, SuccessResponseDto> {
-  constructor(private readonly unitOfWork: IUnitOfWork) {}
+export class LogoutUseCases implements UseCase<UserAccount, string> {
+  constructor(
+    private readonly jwtTokenService: IJwtService,
+    private readonly unitOfWork: IUnitOfWork,
+  ) {}
 
   @Transactional({
     replication: false,
     isolationLevel: IsolationLevel.READ_UNCOMMITTED,
   })
-  public async execute(user: UserAccount): Promise<SuccessResponseDto> {
-    // Get User-Token
-    const userTokens = await this.unitOfWork.getUserTokenRepository().getUserTokenListByUserAccountId(user.id);
+  public async execute(user: UserAccount): Promise<string> {
+    const cookie = this.jwtTokenService.getLoggedOutCookieForJwtRefreshToken();
+    try {
+      const userTokens = await this.unitOfWork.getUserTokenRepository().getUserTokenListByUserAccountId(user.id);
 
-    if (!userTokens || userTokens.length === 0) {
-      return { result: true };
+      if (!userTokens || userTokens.length === 0) {
+        return cookie;
+      }
+      const userTokenModel = new UserToken();
+      userTokenModel.userAccountId = user.id;
+      userTokenModel.type = null;
+      userTokenModel.token = null;
+      userTokenModel.expiredAt = null;
+
+      await Promise.all([
+        this.unitOfWork.getUserTokenRepository().updateUserToken(userTokenModel),
+        this.generateBlacklistToken(userTokens, user.id),
+      ]);
+
+      return cookie;
+    } catch (error) {
+      return cookie;
     }
-    const userTokenModel = new UserToken();
-    userTokenModel.userAccountId = user.id;
-    userTokenModel.type = null;
-    userTokenModel.token = null;
-    userTokenModel.expiredAt = null;
-
-    await Promise.all([
-      this.unitOfWork.getUserTokenRepository().updateUserToken(userTokenModel),
-      this.generateBlacklistToken(userTokens, user.id),
-    ]);
-
-    return { result: true };
   }
 
   private async generateBlacklistToken(userTokens: UserToken[], userAccountId: number): Promise<BlacklistToken[]> {

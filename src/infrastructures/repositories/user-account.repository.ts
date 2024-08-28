@@ -6,6 +6,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { UserAccount, UserLoginData } from '@domains/entities';
 import { UserLoginDataEntity } from '@infrastructures/entities/user-login-data.entity';
+import { UserAccountStatus } from '@domains/common/user-account';
 
 @Injectable()
 export class UserAccountRepository extends AbstractRepository<UserAccountEntity> implements IUserAccountRepository {
@@ -16,6 +17,20 @@ export class UserAccountRepository extends AbstractRepository<UserAccountEntity>
   ) {
     super();
   }
+
+  async updateStatus(id: number, status: UserAccountStatus): Promise<boolean> {
+    const result = await this.userAccountEntityRepository.update(
+      {
+        id,
+      },
+      {
+        status,
+      },
+    );
+
+    return !!result.affected;
+  }
+
   async createUserAccountWithLoginData(dto: {
     userLogin: Partial<UserLoginData>;
     userAccount: Partial<UserAccount>;
@@ -29,11 +44,15 @@ export class UserAccountRepository extends AbstractRepository<UserAccountEntity>
       if (!!user) {
         throw new BadRequestException('Email is already in use');
       }
-      const userAccountEntity = (await transactionalEntityManager.save(dto.userAccount)) as UserAccountEntity;
+      const userAccountEntity = (await transactionalEntityManager.save(
+        new UserAccountEntity({ ...dto.userAccount }),
+      )) as UserAccountEntity;
 
       dto.userLogin.userAccountId = userAccountEntity.id;
 
-      const userLoginDataEntity = (await transactionalEntityManager.save(dto.userLogin)) as UserLoginDataEntity;
+      const userLoginDataEntity = (await transactionalEntityManager.save(
+        new UserLoginDataEntity({ ...dto.userLogin }),
+      )) as UserLoginDataEntity;
 
       userAccount = userAccountEntity.toModel();
       userLoginData = userLoginDataEntity.toModel();
@@ -52,6 +71,7 @@ export class UserAccountRepository extends AbstractRepository<UserAccountEntity>
       relations: {
         userLoginData: true,
         userLoginExternals: true,
+        tokens: true,
       },
     });
 

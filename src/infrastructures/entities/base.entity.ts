@@ -9,7 +9,7 @@ export abstract class BaseEntity {
     update: false,
     nullable: false,
   })
-  createdAt!: Date;
+  createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
@@ -19,7 +19,7 @@ export abstract class BaseEntity {
     onUpdate: 'CURRENT_TIMESTAMP',
     nullable: false,
   })
-  updatedAt!: Date;
+  updatedAt: Date;
 
   @DeleteDateColumn({
     name: 'deleted_at',
@@ -27,5 +27,5 @@ export abstract class BaseEntity {
     default: null,
     nullable: true,
   })
-  deletedAt?: Date;
+  deletedAt: Date;
 }

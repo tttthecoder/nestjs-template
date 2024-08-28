@@ -9,6 +9,7 @@ import { ValidationError } from 'class-validator';
 import { SwaggerConfig } from 'src/infrastructures/config/swagger/swagger.config';
 import { HttpExceptionFilter } from '@shared/filters/exceptions/http-exception.filter';
 import { HttpResponseInterceptor } from '@shared/interceptors/response';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,6 +27,7 @@ async function bootstrap() {
   app
     .use(helmet())
     .use(compression())
+		.use(cookieParser())
     .use(bodyParser.json({ limit: BODY_SIZE_LIMIT }))
     .use(bodyParser.urlencoded({ limit: BODY_SIZE_LIMIT, extended: true }))
     .useGlobalFilters(new HttpExceptionFilter(AppModule.logger))

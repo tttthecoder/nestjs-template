@@ -1,3 +1,4 @@
+import { UserAccountStatus } from '@domains/common/user-account';
 import { UserAccount, UserLoginData } from '@domains/entities';
 
 export interface IUserAccountRepository {
@@ -11,4 +12,6 @@ export interface IUserAccountRepository {
     userLogin: Partial<UserLoginData>;
     userAccount: Partial<UserAccount>;
   }): Promise<UserAccount>;
+
+  updateStatus(id: number, status: UserAccountStatus): Promise<boolean>;
 }

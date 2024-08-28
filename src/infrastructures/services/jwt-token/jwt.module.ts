@@ -10,9 +10,10 @@ import { UserAccountRepository } from '@infrastructures/repositories/user-accoun
 import { EnvironmentConfigService } from '@infrastructures/config/environment-config/environment-config.service';
 import { JWTConfig } from '@domains/config/jwt.interface';
 import { RepositoriesModule } from '@infrastructures/repositories/repositories.module';
+import { JwtRefreshTokenStrategy } from '@infrastructures/strategies/jwtRefresh.strategy';
 
 @Module({
-  imports: [EnvironmentConfigModule, JwtModule, UnitOfWorkModule,RepositoriesModule],
+  imports: [EnvironmentConfigModule, JwtModule, UnitOfWorkModule, RepositoriesModule],
   providers: [
     JwtTokenService,
     {
@@ -20,6 +21,15 @@ import { RepositoriesModule } from '@infrastructures/repositories/repositories.m
       provide: JwtStrategy,
       useFactory: (userAccountRepository: UserAccountRepository, config: JWTConfig) =>
         new JwtStrategy(userAccountRepository, config),
+    },
+    {
+      inject: [UserAccountRepository, JwtTokenService, EnvironmentConfigService],
+      provide: JwtRefreshTokenStrategy,
+      useFactory: (
+        userAccountRepository: UserAccountRepository,
+        jwtTokenSerivce: JwtTokenService,
+        config: EnvironmentConfigService,
+      ) => new JwtRefreshTokenStrategy(userAccountRepository, jwtTokenSerivce, config),
     },
     {
       provide: APP_GUARD,

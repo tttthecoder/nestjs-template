@@ -14,17 +14,21 @@ export class VerifyRecoveryTokenUseCases implements UseCase<ValidateTokenRequest
   ) {}
 
   public async execute({ token }: ValidateTokenRequestDto): Promise<SuccessResponseDto> {
-    const { uuid } = await this.jwtTokenService.checkToken(token, TokenType.ResetPasswordToken);
+    try {
+      const { uuid } = await this.jwtTokenService.checkToken(token, TokenType.ResetPasswordToken);
 
-    const user = await this.unitOfWork.getUserAccountRepository().findOneByUUID(uuid);
+      const user = await this.unitOfWork.getUserAccountRepository().findOneByUUID(uuid);
 
-    if (this.isBlockedOrInactive(user)) {
+      if (this.isBlockedOrInactive(user)) {
+        return { result: false };
+      }
+
+      return {
+        result: true,
+      };
+    } catch (error) {
       return { result: false };
     }
-
-    return {
-      result: true,
-    };
   }
 
   private isBlockedOrInactive(user: UserAccount): boolean {

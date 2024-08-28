@@ -4,7 +4,7 @@ import { BaseEntity } from './base.entity';
 import { EmailStatus, UserPosition } from 'src/domains/common/user-login-data';
 import { UserLoginData } from '@domains/entities';
 
-@Entity({ name: 'user_login_data', schema: 'asean-hr-training' })
+@Entity({ name: 'user_login_data' })
 export class UserLoginDataEntity extends UserLoginData {
   @PrimaryGeneratedColumn({ name: 'id', type: 'bigint' })
   id: number;
@@ -111,6 +111,21 @@ export class UserLoginDataEntity extends UserLoginData {
 
   public toModel(): UserLoginData {
     const model = new UserLoginData();
+    model.id = this.id;
+    model.confirmationToken = this.confirmationToken;
+    model.createdAt = this.baseEntity.createdAt;
+    model.updatedAt = this.baseEntity.updatedAt;
+    model.deletedAt = this.baseEntity.deletedAt;
+    model.email = this.email;
+    model.emailStatus = this.emailStatus;
+    model.isTwoFactorEnabled = this.isTwoFactorEnabled;
+    model.isTwoFactorVerified = this.isTwoFactorVerified;
+    model.passwordHash = this.passwordHash;
+    model.passwordRecoveryToken = this.passwordRecoveryToken;
+    model.twoFactorSecret = this.twoFactorSecret;
+    model.userAccountId = this.userAccountId;
+    model.userPosition = this.userPosition;
+    model.uuid = this.uuid;
 
     return model;
   }

@@ -6,4 +6,6 @@ export interface JWTConfig {
   getJwtType(): string;
   getJwtPasswordExpirationTime(): string;
   getJwtPasswordSecret(): string;
+  getJwtRefreshCookieKey(): string;
+  getJwtRefreshTokenCookieMaxAge(): string;
 }

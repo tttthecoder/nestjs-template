@@ -11,7 +11,7 @@ import { UserAccount } from '@domains/entities';
 import { UseCase } from '@domains/usecase/usecase.interface';
 import { UsecasesProxyProvide } from '@infrastructures/enums';
 import { UseCaseProxy } from '@infrastructures/usecase-proxy/usecases-proxy';
-import { Body, Controller, HttpCode, Inject, Post, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, HttpCode, Inject, Post, Request, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiInternalServerErrorResponse,
@@ -24,6 +24,8 @@ import { ApiGlobalResponse, CurrentUser, SkipAuth, SkipTwoFA } from '@shared/dec
 import { SuccessResponseDto } from '@shared/dtos';
 import { LoginResponseDto } from '@applications/dtos/authentication/login-response.dto';
 import { TOKEN_NAME } from '@infrastructures/config/swagger/swagger.config';
+import { JwtPayload } from '@domains/adapters/jwt.interface';
+import JwtRefreshGuard from '@shared/decorators/jwt-refresh-guard';
 
 @ApiTags('Authentication')
 @Controller({
@@ -34,7 +36,7 @@ export class AuthenticationController {
   constructor(
     @Inject(UsecasesProxyProvide.LoginUsecase)
     private readonly loginUsecase: UseCaseProxy<
-      UseCase<AuthCredentialsRequestDto, { user: UserAccount; token: TokenDto }>
+      UseCase<AuthCredentialsRequestDto, { user: UserAccount; token: TokenDto; refreshTokenCookie: string }>
     >,
     @Inject(UsecasesProxyProvide.RegisterUseCase)
     private readonly registerUseCase: UseCaseProxy<UseCase<RegisterUserRequestDto, UserAccount>>,
@@ -50,7 +52,7 @@ export class AuthenticationController {
     private readonly logoutUsecases: UseCaseProxy<UseCase<UserAccount, SuccessResponseDto>>,
     @Inject(UsecasesProxyProvide.GenerateAccessTokenFromRefreshTokenUseCase)
     private readonly generateAccessTokenFromRefreshTokenUseCase: UseCaseProxy<
-      UseCase<GenerateAccessTokenFromRefreshTokenRequestDto, TokenDto>
+      UseCase<{ user: UserAccount; payload: JwtPayload }, TokenDto>
     >,
   ) {}
 
@@ -71,8 +73,14 @@ export class AuthenticationController {
   @HttpCode(200)
   @SkipAuth()
   @SkipTwoFA()
-  public async login(@Body(ValidationPipe) authCredentialsDto: AuthCredentialsRequestDto): Promise<LoginResponseDto> {
-    const data = await this.loginUsecase.getInstance().execute(authCredentialsDto);
+  public async login(
+    @Body(ValidationPipe) authCredentialsDto: AuthCredentialsRequestDto,
+    @Request() request: any,
+  ): Promise<LoginResponseDto> {
+    const { refreshTokenCookie, ...data } = await this.loginUsecase.getInstance().execute(authCredentialsDto);
+
+    request.res.setHeader('Set-Cookie', [refreshTokenCookie]);
+
     return {
       token: data.token,
       user: UserAccountMapper.toDto(data.user),
@@ -121,8 +129,12 @@ export class AuthenticationController {
   @ApiBearerAuth(TOKEN_NAME)
   @Post('/logout')
   @HttpCode(200)
-  public async logout(@CurrentUser() user: UserAccount): Promise<SuccessResponseDto> {
-    return this.logoutUsecases.getInstance().execute(user);
+  public async logout(@CurrentUser() user: UserAccount, @Request() request: any): Promise<SuccessResponseDto> {
+    const cookie = await this.logoutUsecases.getInstance().execute(user);
+    request.res.setHeader('Set-Cookie', [cookie]);
+    return {
+      result: true,
+    };
   }
 
   @ApiGlobalResponse(SuccessResponseDto)
@@ -131,14 +143,12 @@ export class AuthenticationController {
   @ApiOkResponse({ description: 'token successfully renewed' })
   @ApiInternalServerErrorResponse({ description: 'Server error' })
   @SkipAuth()
-  @SkipTwoFA()
+  @UseGuards(JwtRefreshGuard)
   @Post('/token/refresh')
   @HttpCode(200)
-  public async refreshToken(
-    @Body(ValidationPipe) generateAccessTokenFromRefreshTokenRequestDto: GenerateAccessTokenFromRefreshTokenRequestDto,
-  ): Promise<TokenDto> {
-    return this.generateAccessTokenFromRefreshTokenUseCase
+  public async refreshToken(@Request() request: any): Promise<TokenDto> {
+    return await this.generateAccessTokenFromRefreshTokenUseCase
       .getInstance()
-      .execute(generateAccessTokenFromRefreshTokenRequestDto);
+      .execute({ user: request.user, payload: request.jwtPayload });
   }
 }

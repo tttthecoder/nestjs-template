@@ -4,7 +4,7 @@ import { BaseEntity } from './base.entity';
 import { Provider } from 'src/domains/common/user-login-data-external';
 import { UserLoginDataExternal } from '@domains/entities';
 
-@Entity({ name: 'user_login_data_external', schema: 'asean-hr-training' })
+@Entity({ name: 'user_login_data_external' })
 export class UserLoginDataExternalEntity extends UserLoginDataExternal {
   @PrimaryGeneratedColumn({ name: 'id', type: 'bigint' })
   id: number;
@@ -61,7 +61,7 @@ export class UserLoginDataExternalEntity extends UserLoginDataExternal {
   userAccount: UserAccountEntity;
 
   constructor(userLoginDataExternal?: Partial<UserLoginDataExternalEntity>) {
-		super();
+    super();
     Object.assign(this, userLoginDataExternal);
   }
 }

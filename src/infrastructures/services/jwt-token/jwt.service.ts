@@ -19,6 +19,35 @@ export class JwtTokenService implements IJwtService {
     private readonly jwtConfig: EnvironmentConfigService,
   ) {}
 
+  getLoggedOutCookieForJwtRefreshToken(): string {
+    const cookie = `${this.jwtConfig.getJwtRefreshCookieKey()}=; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=0`;
+    return cookie;
+  }
+
+  async responseAuthWithAccessTokenAndRefreshTokenCookie(
+    userAccount: UserAccount,
+    hasVerify2FA?: boolean,
+  ): Promise<{ user: UserAccount; token: ITokenDto; refreshTokenCookie: string }> {
+    try {
+      const token: TokenDto = await this.generateTokens(userAccount, hasVerify2FA);
+
+      await this.updateOrCreateTokens(userAccount, token);
+
+      const refreshTokenCookie = this.getCookieWithJwtRefreshToken(token.refreshToken);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { refreshToken, ...accessTokenReponseDto } = token;
+
+      return {
+        user: userAccount,
+        token: accessTokenReponseDto,
+        refreshTokenCookie,
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   async checkToken(token: string, type: TokenType): Promise<JwtPayload | Partial<JwtPayload>> {
     return await this.jwtService.verifyAsync(token, {
       algorithms: type === TokenType.ResetPasswordToken ? ['HS256'] : ['HS512'],
@@ -105,11 +134,13 @@ export class JwtTokenService implements IJwtService {
           token: tokens.refreshToken,
           type: UserTokenType.Refresh,
           userAccountId: userAccount.id,
+          expiredAt: await JwtHelper.getExpiredDate(tokens.refreshToken),
         },
         {
           token: tokens.accessToken,
           type: UserTokenType.Access,
           userAccountId: userAccount.id,
+          expiredAt: await JwtHelper.getExpiredDate(tokens.accessToken),
         },
       ]);
     } else {
@@ -149,5 +180,10 @@ export class JwtTokenService implements IJwtService {
         userAccountId: userAccountId,
       })),
     );
+  }
+
+  private getCookieWithJwtRefreshToken(refreshToken: string): string {
+    const cookie = `${this.jwtConfig.getJwtRefreshCookieKey()}=${refreshToken}; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=${this.jwtConfig.getJwtRefreshTokenCookieMaxAge()}`;
+    return cookie;
   }
 }
